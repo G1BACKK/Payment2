@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UPI Payment ₹500</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+    
+    :root {
+      --primary: #2563eb;
+      --primary-light: #3b82f6;
+      --secondary: #f59e0b;
+      --dark: #1e293b;
+      --light: #f8fafc;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+      min-height: 100vh;
+      margin: 0;
+    }
+    
+    .slide-up-enter-active, .slide-up-leave-active {
+      transition: all 0.3s ease;
+    }
+    .slide-up-enter-from, .slide-up-leave-to {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    
+    .upi-app-btn {
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .upi-app-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .pulse {
+      animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+    
+    .qr-container {
+      background: white;
+      padding: 16px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .payment-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      border: none;
+      margin-bottom: 80px;
+    }
+    
+    .submit-btn {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    }
+    
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+    
+    .verification-loader {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #e2e8f0;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .page-container {
+      width: 100%;
+      max-width: 100%;
+      padding: 0;
+      padding-bottom: 100px;
+    }
+    
+    .fixed-bottom-btn {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px;
+      background: white;
+      border-top: 1px solid #e2e8f0;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+      z-index: 10;
+    }
+    
+    .brand-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+      border-radius: 0 0 20px 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .brand-logo {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .amount-display {
+      color: var(--dark);
+      background: rgba(255,255,255,0.9);
+      border-radius: 12px;
+      padding: 8px 20px;
+      display: inline-block;
+      margin-top: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .merchant-name {
+      color: var(--secondary);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Brand Header -->
+    <div class="brand-header">
+      <div class="brand-logo">G1PAY</div>
+      <div class="text-sm opacity-90">Secure UPI Payments</div>
+    </div>
+    
+    <div class="page-container px-4">
+      <!-- Main Payment Card -->
+      <div class="payment-card p-6 space-y-6 w-full max-w-md mx-auto">
+        <!-- Payment Info -->
+        <div class="text-center">
+          <p class="text-gray-500 text-sm">Payment to <span class="merchant-name">G1G1 Merchant</span></p>
+          <p class="text-4xl font-bold text-gray-800 mt-3 flex items-center justify-center">
+            <span class="text-lg mr-1">₹</span>500
+          </p>
+        </div>
+
+        <!-- QR Code -->
+        <div class="flex flex-col items-center">
+          <div class="qr-container">
+            <img :src="qrCodeUrl" alt="UPI QR Code" class="w-48 h-48">
+          </div>
+          <button @click="downloadQR" class="mt-4 text-blue-600 text-sm font-medium flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Download QR Code
+          </button>
+        </div>
+
+        <!-- UPI Apps -->
+        <div class="space-y-3">
+          <h3 class="text-sm font-medium text-gray-500 px-1">Pay using any UPI app</h3>
+          <button 
+            v-for="app in upiApps" 
+            :key="app.name"
+            @click="openUpiApp(app.scheme)"
+            class="upi-app-btn w-full flex justify-between items-center p-4 border border-gray-100 rounded-xl bg-white"
+          >
+            <div class="flex items-center gap-3">
+              <img :src="app.icon" :alt="app.name" class="h-8 w-8">
+              <span class="font-medium text-gray-800">{{ app.name }}</span>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fixed Submit Button -->
+    <div class="fixed-bottom-btn">
+      <button 
+        @click="showUtrModal = true"
+        class="submit-btn w-full text-white py-3 rounded-xl font-medium text-lg"
+      >
+        Submit UTR
+      </button>
+    </div>
+
+    <!-- UTR Modal -->
+    <transition name="slide-up">
+      <div v-if="showUtrModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-md rounded-t-2xl p-6 space-y-4">
+          <div class="flex justify-between items-center">
+            <h3 class="text-lg font-bold text-gray-800">Submit UTR Number</h3>
+            <button @click="showUtrModal = false" class="text-gray-500 p-1 rounded-full hover:bg-gray-100">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <p class="text-gray-600 text-sm">Enter 12-digit UTR from your bank transaction</p>
+          
+          <div class="relative">
+            <input 
+              v-model="utrNumber"
+              @input="validateUtr"
+              maxlength="12"
+              placeholder="123456789012"
+              class="w-full p-4 border border-gray-200 rounded-xl text-center font-mono text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+            <div v-if="utrNumber.length > 0" class="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <span class="text-xs font-medium" :class="isValidUtr ? 'text-green-500' : 'text-red-500'">
+                {{ utrNumber.length }}/12
+              </span>
+            </div>
+          </div>
+          
+          <button 
+            @click="submitPayment"
+            :disabled="!isValidUtr"
+            class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <svg v-if="isVerifying" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            {{ isVerifying ? 'Verifying...' : 'Verify Payment' }}
+          </button>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Verification Status Modal -->
+    <transition name="slide-up">
+      <div v-if="showVerificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-6 text-center">
+          <div class="flex justify-center">
+            <div v-if="verificationStatus === 'verifying'" class="verification-loader"></div>
+            <div v-else-if="verificationStatus === 'failed'" class="p-4 rounded-full bg-red-100">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+          </div>
+          
+          <h3 class="text-xl font-bold text-gray-800">
+            {{ verificationStatus === 'verifying' ? 'Verifying Payment' : 'Payment Failed' }}
+          </h3>
+          
+          <p class="text-gray-600">
+            {{ verificationStatus === 'verifying' ? 'Please wait while we verify your payment...' : 'The UTR number you entered is invalid. Please check and try again.' }}
+          </p>
+          
+          <button 
+            @click="handleVerificationComplete"
+            class="w-full py-3 rounded-xl font-medium"
+            :class="verificationStatus === 'failed' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-800'"
+          >
+            {{ verificationStatus === 'verifying' ? 'Please wait...' : 'Try Again' }}
+          </button>
+        </div>
+      </div>
+    </transition>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted } = Vue;
+
+    createApp({
+      setup() {
+        // Payment details
+        const paymentDetails = {
+          payeeVPA: "g1g4822917.rzp@icici",
+          payeeName: "G1G1 Merchant",
+          amount: "500",
+          transactionNote: "Payment for services",
+          transactionRef: "TXN" + Math.floor(Math.random() * 1000000000)
+        };
+
+        // UPI Apps with icons
+        const upiApps = [
+          { 
+            name: "Paytm", 
+            scheme: "paytmmp://pay",
+            icon: "https://upload.wikimedia.org/wikipedia/commons/4/42/Paytm_logo.png"
+          },
+          { 
+            name: "PhonePe", 
+            scheme: "phonepe://pay",
+            icon: "https://upload.wikimedia.org/wikipedia/commons/0/09/PhonePe_Logo.png"
+          },
+          { 
+            name: "Google Pay", 
+            scheme: "tez://upi/pay",
+            icon: "https://upload.wikimedia.org/wikipedia/commons/7/77/Google_Pay_%28GPay%29_Logo.png"
+          }
+        ];
+
+        // Reactive state
+        const qrCodeUrl = ref("");
+        const showUtrModal = ref(false);
+        const utrNumber = ref("");
+        const showVerificationModal = ref(false);
+        const verificationStatus = ref(""); // 'verifying', 'failed'
+        const isVerifying = ref(false);
+
+        // Computed properties
+        const isValidUtr = computed(() => {
+          return /^\d{12}$/.test(utrNumber.value);
+        });
+
+        // Methods
+        const generateQRCode = () => {
+          const upiString = `upi://pay?pa=${paymentDetails.payeeVPA}&pn=${encodeURIComponent(paymentDetails.payeeName)}&am=${paymentDetails.amount}&tn=${encodeURIComponent(paymentDetails.transactionNote)}&tr=${paymentDetails.transactionRef}`;
+          qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiString)}`;
+        };
+
+        const downloadQR = () => {
+          const link = document.createElement("a");
+          link.href = qrCodeUrl.value;
+          link.download = "G1PAY-UPI-Payment.png";
+          link.click();
+        };
+
+        const openUpiApp = (scheme) => {
+          const upiString = `${scheme}?pa=${paymentDetails.payeeVPA}&pn=${encodeURIComponent(paymentDetails.payeeName)}&am=${paymentDetails.amount}&tn=${encodeURIComponent(paymentDetails.transactionNote)}`;
+          window.location.href = upiString;
+        };
+
+        const validateUtr = (e) => {
+          utrNumber.value = e.target.value.replace(/\D/g, "").slice(0, 12);
+        };
+
+        const submitPayment = () => {
+          if (isValidUtr.value) {
+            isVerifying.value = true;
+            showUtrModal.value = false;
+            showVerificationModal.value = true;
+            verificationStatus.value = "verifying";
+            
+            // Simulate verification process
+            setTimeout(() => {
+              verificationStatus.value = "failed";
+              isVerifying.value = false;
+            }, 3000);
+          }
+        };
+
+        const handleVerificationComplete = () => {
+          if (verificationStatus.value === "failed") {
+            showVerificationModal.value = false;
+            showUtrModal.value = true;
+            verificationStatus.value = "";
+          }
+        };
+
+        // Initialize
+        onMounted(() => {
+          generateQRCode();
+        });
+
+        return {
+          qrCodeUrl,
+          upiApps,
+          showUtrModal,
+          utrNumber,
+          isValidUtr,
+          isVerifying,
+          showVerificationModal,
+          verificationStatus,
+          downloadQR,
+          openUpiApp,
+          validateUtr,
+          submitPayment,
+          handleVerificationComplete
+        };
+      }
+    }).mount("#app");
+  </script>
+</body>
+</html>
